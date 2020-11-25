@@ -1,0 +1,488 @@
+% chktex-file 46
+% chktex-file 3
+% chktex-file 24
+
+\section*{A. Kernel Methods}
+\medskip
+
+\begin{enumerate}
+    \item Let $W = (W_{p,q})$ be a symmetric
+    $n \times n$ matrix
+    where $W_{p,q}$ is the weight of the edge between
+    nodes $p$ and $q$ and $n$ is the number of nodes
+    in the graph.
+    Observe that $W_{p,q}$ if there is no edge between
+    $p$ and $q$.
+    Now consider the matrix $K = W^T W$.
+    An entry $K(p,q)$ is
+    \begin{align} \label{eq:weights}
+        \sum_{u \in V} W_{p,u}^T W_{u,q}.
+    \end{align}
+    Observe that \autoref{eq:weights} is exactly
+    the sum of the weights
+    of all paths of length two between $p$ and $q$:
+    If $u$ is not on a path of length two between $p$ and $q$,
+    then either $u$ does not share an edge with $p$
+    or with $q$ and so $u$ contributes 0 to the sum.
+    If $u$  is on a path of length two between $p$ and $q$,
+    then there is an edge between $p$ and $u$ and $u$ and $q$
+    and so $u$ contributes the product of the weights to the sum.
+
+    Now we want to show that $K$ is PDS.
+    Let $\mathbf{c} \in \R^{n\times 1}$.
+    Then
+    \begin{align}
+        \mathbf{c}^T W^T W \mathbf{c}
+        = ||W \mathbf{c}||_2^2 \geq 0.
+        \nonumber
+    \end{align}
+    Therefore $K$ is a PDS kernel.
+
+    \item Pixel kernel
+    \begin{enumerate}
+    \item Note that
+    \begin{align}
+        \int_{t=0}^\infty 1_{t \in [0,z]} 1_{t \in [0,z']} dt
+        = \langle 1_{[0,z]}, 1_{[0,z']} \rangle.
+        \nonumber
+    \end{align}
+    When $z$ or $z'$ is negative, then $S$ returns 0
+    since $t \notin [0,z], [0,z']$ when $t\geq 0$.
+    Otherwise, $S(z,z') = \min\{z, z'\}$
+    since we only have non-zero values when
+    $0 \leq t \leq z,z'$.
+
+    To show that $S$ is PDS, let $\mathbf{c}$
+    be any real vector.
+    Then
+    \begin{align}
+        \langle \mathbf{c} 1_{[0,z]}, \mathbf{c} 1_{[0,z']}
+        \rangle
+        = ||c||_2^2 \langle 1_{[0,z]}, 1_{[0,z']} \rangle
+        \geq 0
+        \nonumber
+    \end{align}
+    since every element in $1_{[0,z]}$ and $1_{[0,z']}$
+    is nonnegative.
+    Therefore $S$ is a PDS kernel.
+
+    \item Fix $k \in [N]$.
+    From (a), we know that 
+    $\min \{|x_k|^\mu, |x_k'|^\mu \}
+    = S(|x_k|^\mu, |x_k'|^\mu)$.
+    (Since $|x_k|^\mu$ and $|x_k'|^\mu$ 
+    are both positive, we don't
+    have to worry about negative values.)
+
+    Then $\exp(\min \{|x_k|^\mu, |x_k'|^\mu \})$
+    is also PDS
+    from Theorem 6.10 (PDS kernels - closure properties)
+    in the book.
+    That is, composition with a power series
+    with non-negative coefficients (i.e. $\exp$)
+    preserves the PDS property.
+
+    The final step is to take the product of
+    $\exp(\min \{|x_k|^\mu, |x_k'|^\mu \})$
+    over $k \in [N]$.
+    The product of two PDS kernels
+    is also PDS (again by Theorem 6.10).
+    By repeated application of this property,
+    we can extend it to the product of
+    any finite number of PDS kernels.
+
+    Therefore
+    \begin{align}
+        \prod_{k=1}^N
+        e^{\min \{|x_k|^\mu, |x_k'|^\mu \}}
+        \nonumber
+    \end{align}
+    is PDS.
+    \end{enumerate}
+\end{enumerate}
+
+\subsection*{B. Boosting}
+
+\begin{enumerate}
+\item Logistic loss boosting
+\begin{enumerate}
+    \item To show that $\Phi$ is convex we show that
+    its second derivative is positive for
+    $u \in \textrm{dom}(\Phi)$
+    and $\textrm{dom}(\Phi)$ is a convex set.
+    The domain of $\Phi$ is the set of real numbers $\R$.
+    The set of real numbers is clearly convex:
+    for $x, y \in \R$, any number between $x$ and $y$
+    must also be in $\R$.
+    We take the derivatives of $\Phi$:
+    \begin{align}
+        \Phi(u) &= \log_2(1+e^{-u}) \nonumber \\
+        \Phi'(u) &= \frac{1}{\ln(2)}\frac{-e^{-u}}{1+e^{-u}}
+        \nonumber \\
+        \Phi''(u) &= -\frac{1}{\ln(2)}\frac
+        {-(1+e^{-u})e^{-u} - e^{-u}e^{-u}}
+        {(1+e^{-u})^2} = \frac{1}{\ln(2)}
+        \frac{1}{(1+e^{u})^2} \geq 0
+        \nonumber
+    \end{align}
+    for all $u \in \R$.
+    Therefore $\Phi$ is convex.
+
+    To see that $\Phi$ is decreasing,
+    take $x<y$ for $x,y \in \R$.
+    Then
+    \begin{align}
+        -x > -y &\Leftrightarrow
+        e^{-x} > e^{-y} \nonumber \\
+        &\Leftrightarrow
+        1+e^{-x} > 1+e^{-y} \nonumber \\
+        &\Leftrightarrow
+        \log_2(1+e^{-x}) > \log_2(1+e^{-y})
+        \nonumber \\
+        &\Leftrightarrow
+        \Phi(x) > \Phi(y)
+        \nonumber
+    \end{align}
+    since both $\log_2$ and $\exp$ are monotone
+    increasing.
+    Therfore $\Phi$ is decreasing.
+
+    To see that $\Phi$ upper bounds the
+    zero-one loss, take $0\geq x$.
+    Then
+    \begin{align}
+        0 \leq - x &\Leftrightarrow
+        e^0 = 1 \leq e^{-x} \nonumber \\
+        &\Leftrightarrow
+        \log_2(1 + 1) \leq \log_2(1+e^{-x}) \nonumber \\
+        &\Leftrightarrow
+        1 \leq \Phi(x).
+        \nonumber
+    \end{align}
+    Now take $0\leq x$,
+    \begin{align}
+        e^{-x} \geq 0 &\Leftrightarrow
+        1 + e^{-x} \geq 1 \nonumber \\
+        &\Leftrightarrow
+        \log_2(1+e^{-x}) \geq 0 \nonumber \\
+        &\Leftrightarrow
+        \Phi(x) \geq 0
+        \nonumber
+    \end{align}
+    where the the first inequality
+    follows from the positivity of $e^{y}$
+    for all $y\in \R$.
+    Together, $\Phi(x) \geq 1$ when $x$ is negative
+    (i.e. the zero-one loss ``fires'')
+    and $\Phi(x) \geq 0$ when $x$ is positive
+    (i.e. the zero-one loss stays at 0).
+    Thefore $\Phi$ upperbounds the zero-one loss.
+
+    \item
+    Let the function
+    $f(x) = \sum_{j=1}^N \alpha_j h_j (x)$
+    for a given $N$-length vector of
+    non-negative coefficients $\alpha$
+    where $h_j$ is in the hypothesis set $H$ and $H$
+    has cardinality $N$.
+    For pairs of points and labels $(x_i, y_i)$ where $i \in [m]$,
+    define the objective function
+    \begin{align}
+        F(\alpha) = \frac{1}{m} \sum_{i=1}^m
+        \log_2(1+e^{-y_i\sum_{j=1}^p\alpha_j h_j (x_i)}).
+        \nonumber
+    \end{align}
+
+    We now argue that $F$ is convex with respect to $\alpha$:
+    $-y_i f(x_i)$ is convex
+    because it is an affine function of $\alpha$.
+    $\Phi$ is convex by (a) and so
+    $\log_2(1+\exp(-y_i f(x_i)))$ is also convex
+    since composition with a monotone increasing
+    convex function (i.e. $\Phi$) preserves convexity.
+    Finally the sum of convex functions is convex and multiplying
+    by a scalar does not affect convexity.
+    Therefore $F$ is convex with respect to $\alpha$.
+
+    \item
+    For $t \in [T]$ and $k \in [N]$, define
+    \begin{align}
+        f_t &= \sum_{j=1}^N \alpha_t h_j(x_i) \nonumber \\
+        Z_t &= \sum_{i=1}^m \frac{e^{-y_i f_{t-1}(x_i)}}
+        {\ln(2)(1+e^{-y_i f_{t-1}(x_i)})} \nonumber \\
+        D_t(i) &= \frac{e^{-y_i f_{t-1}(x_i)}}
+        {\ln(2)(1+e^{-y_i f_{t-1}(x_i)})Z_t} \nonumber \\
+        \epsilon_{t,k} &= \E_{i \sim D_t}
+        [1_{y_i h_k(x_i)} \leq 0].
+        \nonumber
+    \end{align}
+
+    The directional derivative of $F$ at $\alpha_{t-1}$
+    along $e_k$ is defined by
+    \begin{align}
+        F'(\alpha_{t-1},e_k) &= \lim_{\eta \rightarrow 0}
+        \frac{F(\alpha_{t-1}, e_k) - F(\alpha_{t-1})}
+        {\eta} 
+        \textrm{ where} \nonumber \\
+        F(\alpha_{t-1}, \eta e_k) &= \frac{1}{m}
+        \sum_{i=1}^m \log_2(1+e^{-y_i \sum_{j=1}^N
+        \alpha_{t-1}h_j(x_i) - \eta y_i h_k(x_i)}).
+        \nonumber
+    \end{align}
+    Then taking the derivative with respect to $\eta$
+    and immediately setting $\eta$ to 0 yields
+    \begin{align}
+        F'(\alpha_{t-1}, e_k) &=
+        -\frac{1}{m} \sum_{i=1}^m
+        \frac{y_i h_k(x_i) e^{-y_i f_{t-1}(x_i)}}
+        {\ln(2)(1+e^{-y_i f_{t-1}(x_i)})} \nonumber \\
+        &= -\frac{1}{m} \sum_{i=1}^m y_i h_k(x_i)
+        D_t Z_t \nonumber \\
+        &= -\frac{Z_t}{m} \left [
+        \sum_{i=1}^m D_t(i) 1_{y_i h_k(x_i)=1}
+        - \sum_{i=1}^m D_t(i) 1_{y_i h_k(x_i)=-1}
+        \right] \nonumber \\
+        &= -\frac{Z_t}{m} \left [
+        (1-\epsilon_{e,k}) - \epsilon_{e_k}
+        \right]
+        = \frac{Z_t}{m} \left [
+        2 \epsilon_{t,k} - 1
+        \right ].
+        \label{eq:max}
+    \end{align}
+    We want to maximize the absolute value
+    of \autoref{eq:max} to get the best descent
+    so we want the smallest value of $\epsilon_{t,k}$
+    (since $Z_t$ and $m$ do not change with respect
+    to the choice of $k$).
+    Therefore when boosting on the $t$th iteration
+    we want to find $k$ such that $\epsilon_{t,k}$
+    is smallest.
+    Observe that our weak learning condition must be
+    that there is some $k$ such that
+    $\epsilon_{t,k} \leq 1/2$ on the $t$th iteration,
+    for the distribution $D_t$, and for the sample
+    of $m$ points.
+
+    \item Fix $(u,v) \in \R^2$, then
+    \begin{align}
+        \Phi(u+v) - \Phi(u) &= \log_2(1+e^{-u-v})
+        - \log_2(1+e^{-u}) \nonumber \\
+        &= \log_2 \left( \frac{1+e^{-u-v}}{1+e^{-u}}
+        \right) \nonumber \\
+        &= \log_2 \left( \frac{(e^{-v}-1)e^{-u} + 1+ e^{-u}}{1+e^{-u}}
+        \right) \nonumber \\
+        \label{eq:continuin}
+        &= \log_2 \left( \frac{(e^{-v}-1)e^{-u}}{1+e^{-u}} +1
+        \right).
+    \end{align}
+    Now define $x=(e^{-v}-1)e^{-u}/(1+e^{-u})$.
+    Observe that $x\geq -1$ since $e^{-v} \geq 0$
+    and $1 \geq e^{-u}/(1+e^{-u}) \geq 0$ for all $u,v \in \R$.
+
+    We want to show that $f(x) = x - \ln(x+1) \geq 0$
+    for $x \geq -1$.
+    Together 
+    \begin{align}
+        f'(x) &= 1 - 1/(x+1)  = 0 \Leftrightarrow x = 0
+        \nonumber \\ &\textrm {and} \nonumber \\
+        f''(x) &= 1/(x+1)^2 > 0
+        \nonumber
+    \end{align}
+    imply that $x=0$ is minimal point.
+    Since 
+    \begin{align}
+        \lim_{x\rightarrow -1^+} f(x) = \infty
+        = \lim_{x\rightarrow \infty} f(x)
+        \nonumber
+    \end{align}
+    $x=0$ is indeed a global minimum.
+    Then $f(0)=0$ implies that $f(x) \geq 0$ so
+    \begin{align}\label{eq:lnineq}
+        \ln(x+1) \leq x
+    \end{align}
+    for $x \geq -1$.
+
+    Continuing from \autoref{eq:continuin},
+    we use \autoref{eq:lnineq} and get that
+    \begin{align}
+        \Phi(u+v) - \Phi(u) &= 
+        \ln \left( \frac{(e^{-v}-1)e^{-u}}{1+e^{-u}} +1
+        \right) \nonumber \\
+        &\leq
+        \ln \left( \frac{(e^{-v}-1)e^{-u}}{1+e^{-u}} +1
+        \right) 
+        \frac{1}{\ln(2)} \nonumber \\
+        &\leq \frac{(e^{-v}-1)e^{-u}}{\ln(2)(1+e^{-u})}
+        \nonumber \\
+        &= -\frac{-e^{-u}}{\ln(2)(1+e^{-u})}(e^{-v}-1)
+        = -\Phi'(u) (e^{-v}-1).
+        \nonumber
+    \end{align}
+    Therefore
+    \begin{align}\label{eq:phiinequal}
+        \Phi(u+v) - \Phi(u)
+        \leq -\Phi'(u) (e^{-v}-1)
+    \end{align}
+    for all $(u,v) \in \R^2$.
+
+    \item
+    We have
+    \begin{align}
+        F(\alpha_{t-1} + \eta e_k) - F(\alpha_{t-1})
+        &= \frac{1}{m} \sum_{i=1}^m \log_2
+        (1+e^{-y_i \sum_{j=1}^N \alpha_{t-1, j} h_j(x_i)
+        -\eta y_i h_k(x_i)})
+        \nonumber \\
+        &- \frac{1}{m} \sum_{i=1}^m \log_2
+        (1+e^{-y_i \sum_{j=1}^N \alpha_{t-1, j} h_j(x_i)})
+        \nonumber.
+    \end{align}
+    Define $u_i = y_i \sum_{j=1}^N \alpha_{t-1, j} h_j(x_i)$
+    and $v_i = \eta y_i h_k(x_i)$.
+    Then using \autoref{eq:phiinequal}
+    \begin{align}
+        F(\alpha_{t-1} + \eta e_k) - F(\alpha_{t-1})
+        &= \frac{1}{m} \sum_{i=1}^m
+        \Phi(u_i + v_i) - \Phi(u_i) \nonumber \\
+        &\leq \frac{1}{m} \sum_{i=1}^m
+        - \Phi'(u_i) (e^{-v_i}-1) \nonumber \\
+        &= \frac{1}{m} \sum_{i=1}^m
+        -\frac{-e^{-u_i}}{\ln(2)(1+e^{u_i})}
+        (e^{-v_i}-1) \nonumber \\
+        &= \frac{1}{m} \sum_{i=1}^m
+        D_t(i) Z_t (e^{-\eta y_i h_k(x_i)}-1).
+        \nonumber
+    \end{align}
+    Therefore
+    \begin{align}\label{eq:Finequality}
+        F(\alpha_{t-1} + \eta e_k) - F(\alpha_{t-1})
+        \leq \frac{1}{m} \sum_{i=1}^m
+        D_t(i) Z_t (e^{-\eta y_i h_k(x_i)}-1).
+    \end{align}
+
+    \item
+    We minimize the upper bound in \autoref{eq:Finequality}
+    by differentiating with respect to $\eta$ and
+    setting the result equal to 0.
+    We get
+    \begin{align}
+        \frac{1}{m} \sum_{i=1}^m D_t(i)Z_t
+        (-y_i h_k(x_i) e^{-\eta y_i h_k(x_i)}) &= 0
+        \nonumber \\
+        -\frac{Z_t}{m} \left[
+        \sum_{i=1}^m D_t(i) 1_{y_i h_k(x_i) = 1} e^{-\eta}
+        - \sum_{i=1}^m D_t(i) 1_{y_i h_k(x_i) = -1} e^{\eta}
+        \right] &= 0 \nonumber \\
+        (1-\epsilon_{t,k})e^{-\eta} - \epsilon_{t,k} e^\eta &= 0
+        \nonumber \\
+        \frac{1-\epsilon_{t,k}}{\epsilon_{t,k}} &= e^{2\eta}
+        \nonumber \\
+        \frac{1}{2} \ln \left(
+        \frac{1-\epsilon_{t,k}}{\epsilon_{t,k}} \right)
+        &= \eta.
+        \label{eq:stepsize}
+    \end{align}
+    \autoref{eq:stepsize} is exactly the same as the minimization
+    step size (there the variable is $\alpha_t$) in AdaBoost
+    since our $\epsilon_{t,k}$ is their $\epsilon_t$.
+    (Their $\epsilon_t$ is defined to be in the best direction $k$.)
+
+    At iteration $t$, the step is given by
+    $\alpha_t = \alpha_{t-1} + \eta e_k$
+    where $\eta$ is the step size given in 
+    \autoref{eq:stepsize} and $e_k$ is the step direction
+    chosen because its error is smallest.
+    In terms of $f_t = \sum_{i=j}^N \alpha_{t,j} h_j$,
+    the step is given by
+    $f_t = f_{t-1} + \eta h_k = f_{t-1} + \alpha_t h_t$
+    where $\alpha_t = \eta$ and $h_t=h_k$ are alternate
+    notation for the step size and direction.
+
+    \item The pseudocode appears in \autoref{lst:logreg}.
+
+    \begin{minipage}{\linewidth}
+    \begin{lstlisting}[caption={Logistic loss boosting.}, label={lst:logreg}]
+  input: set of samples $S= ((x_1,y_1),\ldots, (x_m, y_m))$,
+         number of iterations $T$,
+         hypothesis set $H$ with $N$ base predictors
+  output: function $f$
+  $f_0 \gets 0$
+  for $i \gets 1$ to $m$ do
+    $D_1(i) \gets 1/m$
+  for $t \gets 1$ to $T$ do
+    $h_t \gets \arg \min_{h \in H} \Pr_{i \sim D_t}(h(x_i) \neq y_i)$
+    $\epsilon_t \gets \Pr_{i \sim D_t}(h_t(x_i) \neq y_i)$
+    $\alpha_t \gets \frac{1}{2} \ln(\frac{1-\epsilon_{t}}{\epsilon_{t}})$
+    $f_t \gets f_{t-1} + \alpha_t h_t$
+    $Z_{t+1} \gets \sum_{i=1}^m e^{-y_i f_{t}(x_i)}/(\ln(2)(1+e^{-y_i f_{t}(x_i)}))$
+    for $i \gets 1$ to $m$ do
+      $D_{t+1}(i) \gets e^{-y_i f_{t}(x_i)}/(\ln(2)(1+e^{-y_i f_{t}(x_i)})Z_{t+1})$
+  return $f_T$
+    \end{lstlisting}
+    \end{minipage}
+
+    \item
+    We will use Corollary 7.5 and Corollary 7.6 from the book.
+    They cannot be directly applied to the function returned
+    from \autoref{lst:logreg} since it is not a convex combination
+    of base hypotheses.
+    Instead, define
+    $\bar{f} = \sum_{t=1}^T \alpha_t h_t / (||\alpha||_1) \in \textrm{conv}(H)$
+    where $\alpha$ is the vector with 0 entries in the positions corresponding
+    to $h$ that are not picked in any iteration $t \in [T]$ and $\alpha_t$
+    in the positions corresponding to $h_t$ that are picked at iteration $t$.
+    Observe that $\bar{f}$ and $f$ are equivalent in the context
+    of binary classification since $\textrm{sgn}(f) = \textrm{sgn}(f/||\alpha||_1)$.
+    It follows that $R(f) = R(f/||\alpha||_1)$.
+
+    Then for $H$ a set of real-valued functions, margin $\rho>0$, any
+    $\delta>0$, and $\bar{f} \in \textrm{conv}(H)$,
+    Corollary 7.5 (Ensemble Rademacher margin bound) yields
+    \begin{align}
+        R(f) = R(\bar{f}) \leq \hat{R}_{S,\rho}(\bar{f}) + \frac{2}{\rho}
+        \mathcal{R}_m(H) + \sqrt{\frac{\ln(1/\delta)}{2m}}
+        \nonumber
+    \end{align}
+    with probability $1-\delta$.
+
+    We also have the option to bound the Rademacher complexity like so
+    \begin{align}
+        \mathcal{R}_m(H) \leq \sqrt{\frac{2d\log(em/d)}{m}}
+        \nonumber
+    \end{align}
+    as in Corollary 7.6 (Ensemble VC-Dimension margin bound).
+
+    Define
+    \begin{align}
+        \rho_f = \min_{i\in[m]} \frac{|\alpha \cdot f(x_i)|}{||\alpha||_1}.
+        \nonumber
+    \end{align}
+    Then, since the margin loss can be upper bounded by the fraction
+    of points $x$ labeled with $y$ in the training sample with confidence
+    margin at most $\rho$,
+    we can write
+    \begin{align}
+        \hat{R}_{S,\rho}(\bar{f}) \leq
+        \frac{|\{i\in[m]:y_i \rho_f(x_i) \leq \rho\}|}
+        {m}.
+        \nonumber
+    \end{align}
+    Since $\Phi:u \rightarrow \log_2(1+e^{-u})$
+    upper bounds the zero-one loss by part (a),
+    we can also write
+    \begin{align}
+        \hat{R}_{S,\rho}(\bar{f})
+        &= \frac{1}{m}\sum_{i=1}^m
+        1_{y_i f(x_i) - \rho ||\alpha||_1 \leq 0}
+        \nonumber \\
+        &\leq \frac{1}{m}\sum_{i=1}^m
+        \log_2(1+e^{-y_i f(x_i)+\rho||\alpha||_1}).
+        \nonumber
+    \end{align}
+
+    \item
+
+\end{enumerate}
+\end{enumerate}
+

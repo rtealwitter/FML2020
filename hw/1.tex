@@ -1,0 +1,381 @@
+% chktex-file 46
+% chktex-file 3
+
+\section*{A. Consistent hypotheses}
+\medskip
+
+Let $Z$ be a finite set of $m$ labeled points.
+Suppose we have a PAC-learning algorithm $A$.
+Then
+for all concepts $c$ in the concept class $C$,
+all $\epsilon > 0$, all $\delta > 0$, and all distributions
+$D$ over $Z$,
+\begin{align}
+    \pr_{S \sim D^m}[R(h_S)\leq \epsilon]
+    \geq 1 - \delta
+    \nonumber
+\end{align}
+for hypothesis set $h_S$ which depends
+on sample $S$.
+In other words,
+with probability $1-\delta$ for $S\sim D^m$,
+\begin{align}\label{eq:rhs}
+    R(h_S) = \pr_{x\in D}[h_S(x)\neq c(x)] \leq \epsilon
+\end{align}
+from the definition of $R(h)$ on page 6 of Lecture 02.
+
+We want to show that we can find a hypothesis
+$h \in H$ that is consistent with $Z$ with
+probability at least $1-\delta'$ for $\delta'>0$.
+
+Fix $m$ the size of $Z$ and $\delta' >0$.
+Now choose $D$ to be the uniform
+distribution, $\epsilon=\delta'/2m$,
+and $\delta=\delta'/2$.
+We train $A$ with these parameters
+on a sample $S$ drawn from $D^m$.
+
+We now argue that hypothesis $h_S$
+on $S$ is consistent with $Z$ with probability
+at least $1-\delta'$.
+
+Observe that the probability $h_S$
+is consistent with $Z$ is the complement
+of the probability that $h_S$ makes an
+error on some element $x$ in $Z$.
+That is,
+\begin{align}
+    \pr(R(h_S) = 0) &= 1
+    - \pr(h_S(x) \neq c(x)
+    \textrm{ for some } x \in Z)
+    \label{eq:first} \\
+    &\geq 1 - m \pr(h_S(x) \neq c(x))
+    \label{eq:second} \\
+    & \geq 1- m \frac{\delta'}{2m}
+    = 1 - \frac{\delta'}{2}
+    \label{eq:third}
+\end{align}
+where \autoref{eq:second} follows
+from \autoref{eq:first} by the Union Bound
+and \autoref{eq:third} follows from
+\autoref{eq:second} by \autoref{eq:rhs}.
+
+Therefore $h_S$ is consistent with $Z$
+with probability $1-\delta'/2$ times
+the probability \autoref{eq:rhs} holds
+which is also $1-\delta'/2$.
+That total probability is
+\begin{align}
+    1-2\frac{\delta'}{2} + \frac{\delta'^2}{4}
+    \geq 1-\delta'
+    \nonumber
+\end{align}
+as required.
+
+Clearly the time complexity depends on the PAC-learning
+algorithm $A$.
+If $A$ is efficient then our approach is as well.
+
+\medskip
+\section*{B. Oracle PAC Learning}
+\medskip
+
+\begin{enumerate}
+    \item We go straight to the $p\geq 1$ case.
+    Clearly the general solution holds for $p=3$.
+    Let $S=\{(x_i,y_i), \dots, (x_m,y_m)\}$
+    denote the labeled sample of size $m$.
+    Assume the true concept is formed
+    by the intervals 
+    $[a_1,b_1] \cup \dots \cup [a_p, b_p]$
+    where $a_k, b_k \in \R$ for $k \in [p]$.
+    Define
+    \begin{align}
+        \hat{a}_1 &:= \min_{y_i=1} x_i
+        & 
+        \hat{b}_1 &:= \max_
+        {y_i=1, x_i < x_j \forall x_j > \hat{a}_1 : y_j=1} x_i
+        \nonumber \\
+        \hat{a}_2 &:= \min_{y_i=1, x_i > \hat{b}_1} x_i
+        &
+        \hat{b}_2 &:= \max_
+        {y_i=1, x_i < x_j \forall x_j > \hat{a}_2 : y_j=1} x_i
+        \nonumber \\
+        \hat{a}_p &:= \min_{y_i=1, x_i > \hat{b}_{p-1}} x_i
+        &
+        \hat{b}_p &:= \max_
+        {y_i=1, x_i < x_j \forall x_j > \hat{a}_p : y_j=1} x_i
+        \nonumber.
+    \end{align}
+    That is,
+    $\hat{a}_k$ and $\hat{b}_k$ tightly
+    enclose all the samples in $[a_k, b_k]$.
+    The algorithm returns the concept
+    $R_S = [\hat{a}_1,\hat{b}_1] \cup 
+    \dots \cup 
+    [\hat{a}_p,\hat{b}_p]$.
+    Without loss of generality,
+    the error region of $R_S$
+    is the union of intervals $[a_k, \hat{a}_k]$ 
+    and $[b_k, \hat{b}_k]$ for $k \in [p]$.
+
+    We wish to bound the probability that the
+    total error region is greater than $\epsilon$.
+    To do this, we bound the probability 
+    that the $k$th error interval for $k \in [p]$
+    is greater than $\epsilon/p$.
+
+    If $P([a_k,b_k]) \leq \epsilon/p$
+    then the probability of error
+    for $[a_k, \hat{a}_k] \cup [b_k, \hat{b}_k]$
+    is also less than $\epsilon/p$ with probability 1 since
+    $[a_k, b_k]$ contains 
+    $[a_k, \hat{a}_k] \cup [b_k, \hat{b}_k]$.
+
+    Now, since $P([a_k,b_k]) > \epsilon/p$.
+    we define the intervals $[a_k, a_k']$ and $[b_k', b_k]$
+    such that $\pr([a_k, a_k'])=\pr([b_k', b_k])=\epsilon/2p$.
+    Observe that if $\hat{a}_k \leq a_k'$ and $\hat{b}_k \geq b_k'$,
+    the probability of the error region is less than or equal
+    to $\epsilon/p$.
+    Then
+    \begin{align}
+        \pr(R([a_k, \hat{a}_k] \cup [b_k, \hat{b}_k])>\epsilon/p)
+        & \leq \pr(\hat{a}_k>a_k' \textrm{ or } \hat{b}_k < b_k')
+        \nonumber \\
+        & \leq 2(1-\epsilon/2p)^m \leq 2e^{-m\epsilon/2p}
+        \nonumber
+    \end{align}
+    by the Union Bound.
+    Setting $2e^{-m\epsilon/2p} = \delta$,
+    we have that the sample complexity
+    $m \geq \frac{2p \log (2 / \delta )}{\epsilon}$.
+    As for time complexity, we can order the $m$ samples
+    in $m \log m$ time and then, in a single pass,
+    construct the concept $R_S$.
+    Hence the time complexity is $m (1+\log m)$.
+
+    \item
+    \begin{enumerate}
+        \item
+        PAC-learning is not possible when $p$ is not provided.
+        To see this, consider a model where we choose
+        the number of samples and an adversary chooses the parameter.
+        We can choose $m$ to be an arbitrarily large
+        fixed number.
+        But then the adversary comes back with $p=1000m$ or $p=2^m$.
+        Then clearly we cannot PAC-learn with this sample since
+        we will not even have a sample from each concept.
+
+        \item Fix $\epsilon > 0$, $\delta > 0$, and $i \geq 1$.
+        Now define $n=32/\epsilon [i \log 2 + \log 2/\delta]$.
+        We will use Chernoff's multiplicative bound
+        which gives the following:
+        \begin{align}
+            \pr(\hat{R}(h)\leq(1-\epsilon)R(h)) \leq
+            e^{-nR(h)\epsilon^2/2}.
+            \nonumber
+        \end{align}
+
+        Assume that $R(h) \geq \epsilon$.
+        We want to bound the probability that
+        $h$ is accepted.
+        We make the additional assumption
+        that $\epsilon \leq 1/4$.
+        Then
+        \begin{align}
+            \pr(\hat{R}(h)\leq \frac{3}{4}\epsilon)
+            &\leq \pr(\hat{R}(h)\leq (1-\epsilon)\epsilon)
+            \nonumber \\
+            &\leq \pr(\hat{R}(h)\leq (1-\epsilon)R(h)).
+            \nonumber
+        \end{align}
+
+        We apply Chernoff's bound to get
+        \begin{align}
+            &\leq \exp(-n R(h) \epsilon^2/2)
+            \leq \exp(-n \epsilon^3/2)
+            \nonumber \\
+            &= \exp(-32/\epsilon [i \log 2 + \log 2/\delta] \epsilon^3/2)
+            \nonumber \\
+            &=  \exp(-16 [i \log 2 + \log 2/\delta] \epsilon^2)
+            \nonumber \\
+            &= \left(\exp(\log 2^i) \exp(\log 2/\delta)
+            \right)^{-16\epsilon^2}
+            \nonumber \\
+            &= \frac{\delta}{2^{i+1}}^{16\epsilon^2}
+            \leq \frac{\delta}{2^{i+1}} 
+            \nonumber
+        \end{align}
+        where the final inequality holds for
+        $\epsilon \leq 1/4$.
+        
+        \item Fix $\epsilon > 0$, $\delta > 0$, and $i \geq 1$.
+        Now define $n=32/\epsilon [i \log 2 + \log 2/\delta]$.
+        We will use Chernoff's multiplicative bound
+        which gives the following:
+        \begin{align}
+            \pr(\hat{R}(h)\geq(1+\epsilon)R(h)) \leq
+            e^{-nR(h)\epsilon^2/3}.
+            \nonumber
+        \end{align}
+
+        Assume that $R(h) \leq \epsilon/2$.
+        We want to bound the probability that
+        $h$ is rejected.
+        We make the additional assumption
+        that $\epsilon \leq 1/4$.
+        Then
+        \begin{align}
+            \pr(\hat{R}(h)> \frac{3}{4}\epsilon)
+            &\leq \pr(\hat{R}(h)>\frac{3}{2}R(h))
+            \nonumber \\
+            &\leq \pr(\hat{R}(h)> (1+\epsilon)R(h)).
+            \nonumber
+        \end{align}
+
+        We apply Chernoff's bound to get
+        \begin{align}
+            &\leq \exp(-n R(h) \epsilon^2/3)
+            \nonumber \\
+            &= \exp(-32/\epsilon [i \log 2 + \log 2/\delta] R(h)\epsilon^2/3)
+            \nonumber \\
+            &\leq \exp(-8 [i \log 2 + \log 2/\delta] R(h) \epsilon)
+            \nonumber \\
+            &= \left(\exp(\log 2^i) \exp(\log 2/\delta)
+            \right)^{-8R(h)\epsilon}
+            \nonumber \\
+            &= \frac{\delta}{2^{i+1}}^{8R(h)\epsilon}
+            \leq \frac{\delta}{2^{i+1}} 
+            \nonumber
+        \end{align}
+        where the final inequality holds since
+        $R(h)\epsilon \leq \epsilon^2/2 \leq 1/8$.
+
+        \item
+        We train our PAC-learning algorithm $A$ with
+        precision $\epsilon/2$, confidence $1/2$ and
+        size $\tilde{s} \geq s$ for 
+        $\tilde{s}=\lfloor 2^{(i-1)/\log(2/\delta)} \rfloor$.
+        We test the returned hypothesis $h_i$ on
+        $n$ sampled points.
+
+        Observe that $R(h_i) \leq \epsilon/2$ with
+        probability $1/2$ by \autoref{eq:rhs}.
+
+        We will use Hoeffding's bound which gives
+        \begin{align}
+            \pr(\hat{R}(h)-R(h)\geq \epsilon)
+            \leq e^{-2n\epsilon^2}.
+            \nonumber
+        \end{align}
+
+        Now we upperbound the probability that $h_i$ is
+        rejected in order to lowerbound the probability
+        $h_i$ is accepted:
+        \begin{align}
+            \pr(\hat{R}(h_i) \geq \frac{3}{4}\epsilon)
+            &= \pr(\hat{R}(h_i) \geq \frac{\epsilon}{2}
+            + \frac{\epsilon}{4})
+            \nonumber \\ 
+            &\leq \pr(\hat{R}(h_i) \geq R(h_i) + \frac{\epsilon}{4})
+            \nonumber \\ 
+            &\leq \pr(\hat{R}(h_i)  - R(h_i) \geq \frac{\epsilon}{4}).
+            \nonumber
+        \end{align}
+
+        We apply Hoeffding's bound and get
+        \begin{align}
+            & \leq \exp(-2n\epsilon^2/16) 
+            \nonumber \\
+            &= \exp(-2 (32/\epsilon [i \log 2 + \log 2/\delta])
+            \epsilon^2/16)
+            \nonumber \\
+            &= \exp(-4 [i \log 2 + \log 2/\delta]\epsilon)
+            \nonumber \\
+            &= \left(\exp(\log2^i)\exp(\log2/\delta)\right)
+            ^{-4\epsilon}
+            \nonumber \\
+            &= \frac{\delta}{2^{i+1}}^{4\epsilon}
+            \leq \frac{\delta}{2^{i+1}} \leq \frac{1}{4}
+            \nonumber
+        \end{align}
+        for $\epsilon \leq 1/4$, $\delta <1$, and
+        $i \geq 1$.
+        Therefore the probability $h_i$ is accepted
+        is more than or equal to $3/4$ times the confidence probability
+        $1/2$ which gives $\pr(h_i \textrm{ is accepted}) \geq 3/8$.
+
+        \item
+        The probability
+        $h_i$ is rejected for $\tilde{s}\geq s$ is
+        less than or equal to $5/8$.
+        (This is the complement of what we have just shown.)
+        Now we want to find the probability that
+        $h_i$ is rejected for 
+        $j=\lceil \log(2/\delta)/\log(8/5)\rceil$
+        rounds when $\tilde{s}\geq s$.
+        Observe that we can change the base
+        of the $\log$ ratio as long as we make the
+        base the same.
+        Then
+        $\log(2/\delta)/\log(8/5)=\log_{5/8}(2/\delta)/
+        \log_{5/8}(8/5) = \log_{5/8}(\delta/2)$.
+        It follows that
+        \begin{align}
+            (5/8)^j = (5/8)^{\lceil \log_{5/8}(\delta/2)\rceil}
+            \leq \delta/2.
+            \nonumber
+        \end{align}
+
+        \item
+        Now we show that for
+        $i \geq \lceil 1+(\log_2 s) \log(2/\delta) \rceil$,
+        $\tilde{s}\geq s$.
+        We have
+        \begin{align}
+            \tilde{s}&= \lfloor 2^{(i-1)/\log(2/\delta)} \rfloor
+            \nonumber \\
+            &= \lfloor 2^{(\lceil 1+(\log_2 s) \log(2/\delta) \rceil-1)/\log(2/\delta)} \rfloor
+            \nonumber \\
+            &\geq \lfloor 2^{(\log_2 s) \log(2/\delta)/\log(2/\delta)} \rfloor
+            = s
+            \nonumber
+        \end{align}
+
+        \item 
+        After $\lceil 1+(\log_2 s) \log(2/\delta) \rceil$
+        iterations, we have $\tilde{s} \geq s$.
+        After an additional $j$ iterations where
+        $j=\lceil \log(2/\delta)/\log(8/5)\rceil$
+        (with $\tilde{s} \geq s$),
+        the probability that all $h_i$ are rejected
+        is less than or equal to $\delta/2$.
+        Since we halt as soon as a single $h_i$ is accepted,
+        the probability we halt after at most
+        $j' = \lceil 1+(\log_2 s) \log(2/\delta) \rceil + j$ 
+        iterations is at least $1-\delta/2$.
+        We now upper bound the probability that
+        $R(h_i) > \epsilon$ given the algorithm
+        accepts $h_i$.
+        That is,
+        \begin{align}
+            \Pr(R(h_i)>\epsilon | h_i \textrm{ accepted})
+            &= \frac{\Pr(R(h_i)>\epsilon \textrm{ and }
+            h_i \textrm{ accepted})}{\Pr(h_i \textrm{ accepted})}
+            \nonumber \\
+            &\leq \frac{8}{3}(\frac{\delta}{8}) \leq 
+            \frac{\delta}{2}
+            \nonumber
+        \end{align}
+        for $i > 1$ since $\Pr(h_i \textrm{ accepted})
+        \geq 3/8$ and $\Pr(R(h_i)>\epsilon \textrm{ and }
+        h_i \textrm{ accepted}) \leq \delta/2^{i+1}$.
+        Then the probability the algorithm halts
+        in $j'$ steps and $R(h)\leq \epsilon$ is
+        at least
+        $(1-\delta/2)^2 \geq 1-\delta$ by the analysis
+        at the end of the first problem.            
+    \end{enumerate}
+
+\end{enumerate}

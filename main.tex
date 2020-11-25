@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage{fullpage}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption} 
+\usepackage{algpseudocode}
+\usepackage{bbm}
+\usepackage{float}
+\usepackage{framed}
+\usepackage{enumerate}
+\usepackage{color}
+\usepackage[colorlinks=true, linkcolor=red, urlcolor=blue, citecolor=blue]{hyperref}
+\usepackage{listings}
+
+\DeclareMathOperator*{\E}{\mathbb{E}}
+\DeclareMathOperator*{\pr}{\mathbb{P}}
+\DeclareMathOperator*{\Var}{\textrm{Var}}
+\DeclareMathOperator*{\I}{\mathbb{I}}
+\DeclareMathOperator*{\R}{\mathbb{R}}
+
+\renewcommand{\lstlistingname}{Algorithm}% Listing -> Algorithm
+\lstset{%
+%    basicstyle=\small\ttfamily,
+    escapechar=~,
+    frame=single,
+    keywordstyle=\bfseries,
+    keywords={input,output,for,return,if,in,then,do},
+    mathescape=true,
+    morecomment=[l][\color{blue}]{\#},
+    numbers=left,
+    xleftmargin=.04\textwidth
+}
+
+\topmargin 0pt
+\advance \topmargin by -\headheight
+\advance \topmargin by -\headsep
+\textheight 8.9in
+\oddsidemargin 0pt
+\evensidemargin \oddsidemargin
+\marginparwidth 0.5in
+\textwidth 6.5in
+
+\parindent 0in
+\parskip 1.5ex
+
+\newcommand{\homework}[2]{
+	\noindent
+	\begin{center}
+		\framebox{
+			\vbox{
+				\hbox to 6.50in { {\bf NYU CSCI-GA.2566-001: 
+				Foundations of Machine Learning 
+				} \hfill Fall 2020 }
+				\vspace{4mm}
+				\hbox to 6.50in { {\Large \hfill Homework #1  \hfill} }
+				\vspace{2mm}
+				\hbox to 6.50in { {Name: #2 \hfill} }
+			}
+		}
+	\end{center}
+	\vspace*{4mm}
+}
+
+\newcommand{\braket}[2]{\langle #1, #2\rangle}
+\newcommand{\norm}[1]{||#1||_2}
+
+\begin{document}
+	
+%\homework{1}{R. Teal Witter}
+%\input{hw/1}
+
+%\homework{2}{R. Teal Witter}
+%\input{hw/2}
+
+\homework{3}{R. Teal Witter}
+\input{hw/3}
+	
+\end{document}
