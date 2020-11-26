@@ -56,16 +56,16 @@ def stumpsubroutine(Sx, Sy, D, requirement, feature):
         else: raise ValueError("Unrecognized classification.")
         if error < minerror:
             minerror, mincutoff, minpred = error, xi, 1
-            if minerror < requirement:
-                minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
-                if minerror1 < requirement:
-                    return minerror1, mincutoff, minpred
+            #if minerror < requirement:
+            #    minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
+            #    if minerror1 < requirement:
+            #        return minerror1, mincutoff, minpred
         if (1-error) < minerror:
             minerror, mincutoff, minpred = 1-error, xi, -1
-            if minerror < requirement:
-                minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
-                if minerror1 < requirement:
-                    return minerror1, mincutoff, minpred
+            #if minerror < requirement:
+            #    minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
+            #    if minerror1 < requirement:
+            #        return minerror1, mincutoff, minpred
     minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
     if minerror1 < requirement:
         return minerror1, mincutoff, minpred
