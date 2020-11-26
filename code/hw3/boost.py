@@ -1,4 +1,5 @@
 import numpy as np
+import cProfile
 
 def importdata(filename):
     xs, ys = [], []
@@ -41,72 +42,74 @@ def handleclose(a, b, atol=.05):
     if not np.allclose(a, b, atol):
         print(a)
         print(b)
-    #assert np.allclose(a, b, atol)
+    assert np.allclose(a, b, atol)
 
-def stumpsubroutine(Sx, Sy, D, requirement):
-    minerror0, mincutoff0, minfeature0 = 1, 0, 0
-    for feature in list(range(3, Sx.shape[1])):
-        error = stumperror(Sx, Sy, D, feature, -np.Inf, 1)
-        error1 = np.dot((Sy[:,] != 1).transpose(), D).item(0)
-        handleclose(error, error1)
-        for index in np.argsort(Sx[:, feature], axis=0):
-            xi, yi, mass = point(Sx, Sy, D, feature, index)
-            if -1 * yi == 1:
-                error -= mass
-            elif yi == 1:
-                error += mass
-            else: raise ValueError("Unrecognized classification.")
-            if error < minerror0:
-                minerror0, mincutoff0, minfeature0, minpred0 = error, xi, feature, 1
-                #if minerror0 < requirement:
-                #    error = stumperror(Sx, Sy, D, minfeature0, mincutoff0, minpred0)
-                #    if error < requirement:
-                #        return error, mincutoff0, minfeature0, minpred0
-            if (1-error) < minerror0:
-                minerror0, mincutoff0, minfeature0, minpred0 = 1-error, xi, feature, -1
-                if minerror0 < requirement:
-                    error = 1-stumperror(Sx, Sy, D, minfeature0, mincutoff0, minpred0)
-                    if 1-error < requirement:
-                        return 1-error, mincutoff0, minfeature0, minpred0
-        if stumperror(Sx, Sy, D, minfeature0, mincutoff0, minpred0) < requirement:
-            return minerror0, mincutoff0, minfeature0, minpred0
-    return minerror0, mincutoff0, minfeature0, minpred0
+def stumpsubroutine(Sx, Sy, D, requirement, feature):
+    minerror, mincutoff, minpred = 1, np.Inf, np.Inf
+    error = stumperror(Sx, Sy, D, feature, -np.Inf, 1)
+    error1 = np.dot((Sy[:,] != 1).transpose(), D).item(0)
+    handleclose(error, error1)
+    for index in np.argsort(Sx[:, feature], axis=0):
+        xi, yi, mass = point(Sx, Sy, D, feature, index)
+        if -1 * yi == 1: error -= mass
+        elif yi == 1: error += mass
+        else: raise ValueError("Unrecognized classification.")
+        if error < minerror:
+            minerror, mincutoff, minpred = error, xi, 1
+            if minerror < requirement:
+                minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
+                if minerror1 < requirement:
+                    return minerror1, mincutoff, minpred
+        if (1-error) < minerror:
+            minerror, mincutoff, minpred = 1-error, xi, -1
+            if minerror < requirement:
+                minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
+                if minerror1 < requirement:
+                    return minerror1, mincutoff, minpred
+    minerror1 = stumperror(Sx, Sy, D, feature, mincutoff, minpred)
+    if minerror1 < requirement:
+        return minerror1, mincutoff, minpred
+    raise ValueError("No stump found.")
 
-def stump(Sx, Sy, D, requirement):
-    minerror, mincutoff, minfeature, minpred = stumpsubroutine(Sx, Sy, D, requirement) 
-    minerror1 = stumperror(Sx, Sy, D, minfeature, mincutoff, minpred)
-    handleclose(minerror, minerror1, atol=.1)
-    def ht(Sx, i):
-        xi = Sx[i,minfeature]
-        return minpred*threshold(xi, mincutoff)
-    assert minerror1 < .5
-    return ht, minerror1
+def stump(Sx, Sy, D, requirement, feature):
+    minerror, mincutoff, minpred = stumpsubroutine(Sx, Sy, D, requirement, feature)
+    ht = []
+    for index in range(Sx.shape[0]):
+        ht += [[-1*minpred,minpred][int(Sx[index,feature] > mincutoff)]]
+    ht = np.matrix(ht).transpose()
+    assert minerror < requirement
+    weightedprediction = np.multiply(D, np.multiply(ht, Sy)<0)
+    minerror1 = np.sum(weightedprediction).item(0)
+    handleclose(minerror1, minerror, atol=0)
+    return ht, minerror, mincutoff, minpred
 
-def adaboost(Sx, Sy, T, requirement):
+def adaboost(Sx, Sy, T, requirement, feature):
     m = len(Sx)
     D = {0:np.zeros((m,1))}
-    alpha, h = [], []
+    alphas, cutoffs, preds = [], [], []
     for i in range(m):
         D[0][i,] = 1/m
     for t in range(T):
-        ht, errort = stump(Sx, Sy, D[t], requirement)
+        ht, errort, cutofft, predt = stump(Sx, Sy, D[t], requirement, feature)
         alphat = .5 * np.log((1-errort)/errort)
         Zt = 2 * np.sqrt(errort*(1-errort))
         D[t+1] = np.zeros((m,1))
-        for i in range(m):
-            yi = Sy[i,].item(0)
-            D[t+1][i,] = D[t][i,] * np.e**(-1*alphat * ht(Sx, i)*yi)/Zt
+        for index in range(m):
+            yi, hti, masst = Sy[index,].item(0), ht[index,].item(0), D[t][index,].item(0)
+            D[t+1][index,] = masst * np.e**(-1*alphat * hti*yi)/Zt
         handleclose(np.sum(D[t+1]), 1, atol=.05)
-        alpha += [alphat]
-        h += [ht]
-    return buildfunction(alpha, h)
+        alphas += [alphat]
+        cutoffs += [cutofft]
+        preds += [predt]
+    return alphas, cutoffs, preds
 
-def buildfunction(alpha, h):
-    def f(Sx, i):
+def buildf(alphas, cutoffs, preds, feature):
+    def f(Sx, index):
         result = 0
-        for j in range(len(alpha)):
-            result += h[j](Sx, i) * alpha[j]
-        return threshold(result, 0)
+        xi = Sx[index,feature].item(0)
+        for j in range(len(alphas)):
+            result += [-1*preds[j], preds[j]][xi>cutoffs[j]]
+        return [-1,1][result > 0]
     return f
 
 def buildlogisticZ(Sx, Sy, f):
@@ -117,26 +120,31 @@ def buildlogisticZ(Sx, Sy, f):
         Z += exp / (np.log(2)*(1+exp))
     return Z
 
-def logisticloss(Sx, Sy, T, requirement):
+def logisticloss(Sx, Sy, T, requirement, feature):
     m = len(Sx)
     D = {0:np.zeros((m,1))}
-    alpha, h = [], []
+    h = np.zeros((m,1))
+    alphas, cutoffs, preds = [], [], []
     for i in range(m):
         D[0][i,] = 1/m
     for t in range(T):
-        ht, errort = stump(Sx, Sy, D[t], requirement)
+        ht, errort, cutofft, predt = stump(Sx, Sy, D[t], requirement, feature)
         alphat = .5 * np.log((1-errort)/errort)
-        alpha += [alphat]
-        h += [ht]        
-        f = buildfunction(alpha, h)
-        Z = buildlogisticZ(Sx, Sy, f)
+        for index in range(m):
+            h[index,] = h[index,].item(0) + alphat*ht[index,].item(0)
+        #f = buildfunction(alpha, h)
+        #Z = buildlogisticZ(Sx, Sy, f)
         D[t+1] = np.zeros((m,1))
         for index in range(m):
-            yi = Sy[index,].item(0)
-            exp = np.e**(-1*yi*f(Sx, index))
-            D[t+1][index,] = exp / (np.log(2) * (1 + exp)*Z)
+            yi, hi = Sy[index,].item(0), h[index,].item(0)
+            exp = np.e**(-1*yi*hi)
+            D[t+1][index,] = exp / (np.log(2) * (1 + exp))#/Z
+        D[t+1] = D[t+1]/np.sum(D[t+1]) # faster than calculating Z
         handleclose(np.sum(D[t+1]), 1)
-    return f
+        alphas += [alphat]
+        cutoffs += [cutofft]
+        preds += [predt]
+    return alphas, cutoffs, preds
 
 def evalerror(f, Sx, Sy):
     error = 0
@@ -158,7 +166,7 @@ def constructgroups(m, k):
         groups[index % k] += [shuffledindices[index].item(0)]
     return groups
 
-def crossvalidate(xs, ys, k, algorithm, T):
+def crossvalidate(xs, ys, k, algorithm, T, feature):
     m, trainerr, testerr = len(xs), 0, 0
     groups = constructgroups(m,k)
     for i in range(k):
@@ -166,27 +174,30 @@ def crossvalidate(xs, ys, k, algorithm, T):
         trainidx = []
         for j in range(k):
             if j != i: trainidx += groups[j]
-        f = algorithm(Sx=xs[trainidx], Sy=ys[trainidx], T=T, requirement=.5)
+        alphas, cutoffs, preds = algorithm(Sx=xs[trainidx], Sy=ys[trainidx], T=T, requirement=.5, feature=feature)
+        f = buildf(alphas, cutoffs, preds, feature)
         trainerr += evalerror(f, xs[trainidx], ys[trainidx])
         testerr += evalerror(f, xs[testidx], ys[testidx])
     return trainerr/k, testerr/k
 
-def crossvalidateT(xs, ys, k, Ts):
+def crossvalidateT(xs, ys, k, Ts, feature=3):
     for T in Ts:
-        ltrainavg, ltestavg = crossvalidate(xs=xs, ys=ys, k=k, algorithm=logisticloss, T=T)
-        lstring = " ".join([str(i) for i in [T, ltrainavg, ltestavg, "\n"]])
-        print(lstring)
-        with open("errorlogistic.txt", "a") as f: f.write(lstring)
-        atrainavg, atestavg = crossvalidate(xs=xs, ys=ys, k=k, algorithm=adaboost, T=T)
+        atrainavg, atestavg = crossvalidate(xs=xs, ys=ys, k=k, algorithm=adaboost, T=T, feature=feature)
         astring = " ".join([str(i) for i in [T, atrainavg, atestavg, "\n"]])        
         with open("erroradaboost.txt", "a") as f: f.write(astring)
         print(astring)
+        ltrainavg, ltestavg = crossvalidate(xs=xs, ys=ys, k=k, algorithm=logisticloss, T=T, feature=feature)
+        lstring = " ".join([str(i) for i in [T, ltrainavg, ltestavg, "\n"]])
+        print(lstring)
+        with open("errorlogistic.txt", "a") as f: f.write(lstring)
+
 
 np.random.seed(1)
 
-Ts = [10, 100, 1000, 10000, 100000]
+Ts = [10]#0000]
 xs, ys = importdata("abalone.data")
-crossvalidateT(xs, ys, 10, Ts)
+cProfile.run("crossvalidateT(xs, ys, 10, Ts)")
+
 
 # Toy example
 #Sx = np.matrix([.23, .51, .01, .42, .63, .15, .91, .37]).transpose()
